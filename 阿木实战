@@ -483,8 +483,13 @@
             5、点击 Create Scan  开始扫描
             6、点击 Reports 查看生成的监测报告，在对应项目报告后面点击Download下载想要的格式
             
-        
-        
+    IBM Security AppScan Standard工具：
+        安装：
+            1、点击 SAPPSSV9.0.3.10EWM.exe  程序开始安装
+            2、直接安装就好，然后运行一次再关闭
+            3、把LicenseProvider.dll替换到安装目录的LicenseProvider.dll
+        基本操作：
+            web:1、菜单栏点击 手动探索 按钮，
         
         
         
