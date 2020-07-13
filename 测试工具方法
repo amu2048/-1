@@ -1,0 +1,5 @@
+测试工具方法总结
+	浏览器兼容 
+		browsershots  http://browsershots.org/ 
+		 简介：Browsershots是一个免费的开源在线Web应用程序，为浏览器兼容性提供便捷。在不同的操作系统和浏览器中对测试网页进行截图。
+		 操作：1.进入在线地址 http://browsershots.org/  2.输入框输入被测url   3.下方选择要兼容的系统和版本  4.点击submut后会跳至截图界面，可以查看相关截图   5.点击“Details”可以查看相关浏览器版本执行状态

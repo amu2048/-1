@@ -383,7 +383,7 @@
                 return json.dumps(res,ensure_ascii=False,sort_keys=True,indent=2)
               
     
-jmeter性能测试
+ jmeter性能测试
     jmeter基本安装操作
         1、jmeter安装，直接安装
         2、Script badboy脚本录制软件
@@ -447,7 +447,7 @@ jmeter性能测试
             使用qps计算机器：峰值时间每秒QPS / 单台机器的QPS   = 需要的机器
 
 
-jmeter集群压测
+ jmeter集群压测
     测试策略分成了以下几步
         第一步，基本测试。也就是说，针对某一个用户进行性能测试，压测5分钟，单线程去访问系统，而这时候对于系统的压力是非常小的。这一步目的是为了获得系统在没有压力的情况下的一个基准，基础的响应时间，这就可以为下一步性能拐点做一个对比。
         第二步，负载测试。对单个交易，多个用户进行并发测试。目的就在于验证这个系统，在这种并发请求的情况下是否会出现并发错误或者数据库锁。
@@ -462,13 +462,26 @@ jmeter集群压测
         第三步：将其前边的注释去掉，然后保存重启jmeter，再次运行远程机器，就可以看到数据了performamce metrics
 
 
-Apache Bench命令   请求数  并发数
+ Apache Bench命令   请求数  并发数
     ab.exe -n 1000 -c 5000 http://dev.53.h5.zhibuji.com/api/Index/Message/Push
     
-    
-            
-            
-            
+ 安全审计工具
+    Acunetix工具：
+        简介：是一款服务版工具，需要部署服务。它会自动抓取您的网站, 并执行黑匣子和灰色框黑客技术, 发现危险的漏洞, 可能会危及您的网站和数据。
+        安装：
+            1、运行Acunetix.Web.12.0.180911134.Retail.exe程序，默认安装。   
+            2、桌面底部菜单来右键打开任务管理器，停止服务中的 acunetix. msc。
+            3、把Patch.exe软件放到安装目录下，运行应用修补程序 (以管理员身份运行)
+            4、弹出的激活程序 里面的信息随便写，然后点击 应用
+            5、以管理员身份运行 cmd 并运行cacls "C:\ProgramData\Acunetix\license." /t /p everyone:r   注意引号内的是你安装目录
+            6、然后选择 是  YES
+        扫描操作：
+            1、打开运行Acunetix程序
+            2、点击 Targets 在顶部 Add Target，添加扫描，设置要扫描的网址
+            3、点击 Scans ，选择你要扫描的项目，再顶部选择 Scans 按钮
+            4、在弹出对话框选择 扫描类型（全扫描）、选择报告（Developer开发者模式）、选择时间（瞬间第一个）
+            5、点击 Create Scan  开始扫描
+            6、点击 Reports 查看生成的监测报告，在对应项目报告后面点击Download下载想要的格式
             
         
         
