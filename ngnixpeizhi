@@ -1,0 +1,29 @@
+进入nginx配置文件位置：/etc/nginx/conf.d/
+创建文件 格式：amuchen.amuqitan.cn.conf
+配置完后检查：/usr/sbin/nginx -t
+reload：/usr/sbin/nginx -s reload
+
+
+
+```
+upstream guanwang {
+    server 127.0.0.1:8101;	#指向项目的端口
+}
+server {
+        listen       80;
+        server_name  amuchen.amuqitan.cn;	#各个项目的域名
+        access_log  logs/amuchen_access.log main;
+        location / {
+            proxy_set_header Host $host:80;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    	    proxy_pass http://guanwang;		#upstream的代理
+            root   html;
+            index  index.html index.htm index.jsp;
+        }
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+    }
+```
