@@ -27,3 +27,13 @@ server {
         }
     }
 ```
+linux 下部署后台运行python文件
+python的输出有缓冲，导致python.log3并不能够马上看到输出。
+
+使用-u参数，使得python不启用缓冲。
+
+所以改正命令，就可以正常使用了
+
+1
+$ nohup python -u test.py > out.log 2>&1 &
+
