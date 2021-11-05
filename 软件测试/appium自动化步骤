@@ -1,0 +1,249 @@
+appium自动化
+    1、部署SDK
+       下载sdk并安装
+       设置sdk环境变量  
+        adb kill-server //结束adb服务
+		adb start-server //启动adb服务
+		adb devices //获取adb设备列表
+    2、设置appium
+        下载appium
+        启动appium
+        启动appium的检查会话框
+        设置参数   {
+                    "platformName": "Android",      #设备系统  Android&iOS
+                     "platformVersion": "10",       #安卓版本如5.1.1 。命令：adb shell getprop ro.build.version.release
+                     "deviceName": "eed4ba88",      #设备连接名字。 命令：adb devices   获得的那一串数字就是
+                     "appPackage": "com.tencent.mobileqq",    #要抓的app包名，
+                      #在设备启动app，
+                      #然后在CMD命令框：adb shell dumpsys window windows | findstr “Current” 或”adb shell dumpsys window w | findstr \/ | findstr name= “
+                      # 显示的如：mCurrentFocus=Window{3ad1f9e4 u0 com.tencent.mobileqq/com.tencent.mobileqq.activity.LoginActivity}
+                      #【com.tencent.mobileqq】 就是包名，【 .activity.LoginActivity】  就是启动视图入口 。  
+                     "appActivity": ".activity.LoginActivity",     #启动视图入口
+                     "noReset": "true"          #为true时不更改原机数据，否则面临改写数据
+                    }
+        启动会话
+        点击小眼睛按钮开始录制（以手机QQ为例）
+            在【左侧视图】中点击【登入】按钮
+            在【选定元素视图】中选择【点击】按钮，意思给这个元素设置点击动作。
+            选中账号栏 选择清空动作：因为QQ具有自动记录账号的功能 我们输入帐号前先清空原有数据
+            点击发送密钥：就是输入动作，写入账号
+            继续给密码框点击动作
+            给密码框发送密钥动作
+            选中登入按钮，给予点击动作
+            点击账号设置图标，左上角的，但是选不到元素，你要选择最近元素，然后在AppSource视图中挨个寻找，当即点击是界面会有对应的地方，
+            我找到的是   android.widget.RelativeLayout resource-id="com.tencent.mobileqq:id/e3u">
+                            <android.widget.Button content-desc="帐户及设置" resource-id="com.tencent.mobileqq:id/ba1">
+                选择这个账户及设置的栏  可以看到 图标变色，给他个点击动作即可。
+            在我的账户设置界面，选在 设置 按钮 给他点击动作。
+            选中账号设置，点击动作
+            选择退出当前帐号，点击动作
+            在弹出确认退出弹框选中 确认退出按钮 给他点击动作
+        脚本录制完毕。
+        在右上方选择脚本录制的语言，我用python 然后记得在点击【显示隐藏样板代码】按钮，在选择语言右侧。
+        复制脚本到pycharm，你可根据自己代码语言的编译器中，优化。
+
+    3、pycharm设置
+        安装appium依赖包 'Appium-Python-Client'
+          依次点击File->Settings->Project->Project interpreter   点击+号，搜索Appium-Python-Client选中点击下方的 Install Package按钮等待安装完成即可。
+
+        把appium里的代码拷贝过来。
+        导入import time（用来延时执行）   import unittest  （单元测试框架）
+        新建类继承unittest.TestCase类class
+            class Appiumfile(unittest.TestCase):
+
+                '''初始化函数'''
+                @classmethod   #装饰器 使初始化函数只执行一次
+                def setUpClass(cls):
+                    caps = {}
+                    caps["platformName"] = "Android"
+                    caps["platformVersion"] = "5.1.1"
+                    caps["deviceName"] = "eed4ba88"
+                    caps["appPackage"] = "com.tencent.mobileqq"
+                    caps["appActivity"] = ".activity.LoginActivity"
+                    caps["noReset"] = "true"
+                    cls.driver = webdriver.Remote("http://localhost:4723/wd/hub", caps)
+                    print('打开指定app',caps["appPackage"])
+
+                '''登入用例 根据用例名顺序执行'''
+                def test_longin_01(self):
+                    self.driver.implicitly_wait(10)  # 隐士等待
+                    el2 = self.driver.find_element_by_accessibility_id("请输入QQ号码或手机或邮箱")
+                    print('定位账号输入框')
+                    el2.clear()
+                    print('清除账号输入框')
+                    el2.send_keys("1248570630")
+                    print('写入登入账号')
+                    self.driver.implicitly_wait(3)
+                    el3 = self.driver.find_element_by_accessibility_id("密码 安全")
+                    print('定位密码输入框')
+                    el3.click()
+                    print('清除密码输入框')
+                    el3.clear()
+                    print('写入密码')
+                    el3.send_keys("lcs19930317")
+                    time.sleep(0.5)
+                    el4 = self.driver.find_element_by_accessibility_id("登 录")
+                    print('定位登入按钮')
+                    el4.click()
+                    print('点击登入按钮开始登入')
+
+                '''退出登入用例'''
+                def test_longout_02(self):
+                    print('开始test_longout_02用例')
+                    self.driver.implicitly_wait(5)
+                    el6 = self.driver.find_element_by_accessibility_id("帐户及设置")
+                    print('定位帐户及设置')
+                    el6.click()
+                    print('点击帐户及设置')
+                    time.sleep(0.5)
+                    el7 = self.driver.find_element_by_accessibility_id("设置")
+                    print('定位设置按钮')
+                    el7.click()
+                    print('点击设置按钮')
+                    time.sleep(0.5)
+                    el8 = self.driver.find_element_by_id("com.tencent.mobileqq:id/account_switch")
+                    print('定位账户管理')
+                    el8.click()
+                    print('点击账户管理')
+                    time.sleep(0.5)
+                    el9 = self.driver.find_element_by_accessibility_id("退出当前帐号")
+                    print('定位退出账号')
+                    el9.click()
+                    print('点击退出账号')
+                    time.sleep(0.5)
+                    el10 = self.driver.find_element_by_id("com.tencent.mobileqq:id/dialogRightBtn")
+                    print('定位确认退出账号按钮')
+                    el10.click()
+                    print('点击确认退出账号按钮')
+
+                '''结束函数'''
+                @classmethod            #装饰器 使结束函数只执行一次
+                def tearDownClass(cls):            
+                    print('准备退出app')
+                    cls.driver.quit()
+                    print('退出完成')
+
+        还可以使用 def setUp(self)和def tearDown(self)函数类 但是每执行一次用例就会执行一次初始化函数和结束函数
+        如果用户名和密码参数化多个，使用ddt模块使用方法
+            导入 ddt
+            测试数据为存放多个字典的列表。
+            测试类的前面需要加上修饰器：@ddt.ddt
+            对应测试用例之前加上修饰器：@ddt.data()
+                #   测试数据：每一条数据都是一个字典；全部数据存放在一个列表中。
+                testDate = [{'username': 'AAA', 'password': '11111'},
+                            {'username': 'BBB', 'password': '22222'},
+                            {'username': 'CCC', 'password': '33333'}]
+
+                #测试类之前需要加上装饰器：@ddt.ddt
+                @ddt.ddt
+                class Test(unittest.TestCase):
+
+                    def setUp(self):
+                        print('start')
+
+                    #测试用例前面需要加上装饰器：@ddt.data()
+                    #装饰器的参数就是测试数据：@ddt.data(*testDate)
+                    @ddt.data(*testDate)
+                    def test_ddt(self, data):
+                        print(data)
+
+                    def tearDown(self):
+                        print('end')
+        建个run.py脚本来运行测试用例
+        import unittest
+        import time
+        from BeautifulReport import BeautifulReport  #测试报告框架
+
+        if __name__ == '__main__':
+            # unittest.main()
+               # test_suite = unittest.defaultTestLoader.discover('./TestCase', pattern='*.py')  #以unittest运行哪个文件夹  下的文件  test*代表所有test文件开头的文件
+                test_suite = unittest.defaultTestLoader.discover('./TestCase', pattern='TestLongin02.py')
+                now = time.strftime("%Y-%m-%d %H%M%S")   #获取当前时间
+                filename = now + 'report.html'        #以时间命名
+                result = BeautifulReport(test_suite)   #框架调取测试文件
+                result.report(filename=filename, description='自动化测试报告', report_dir='./Testreport', theme='theme_memories')
+
+jmeter性能测试
+    1、jmeter安装，直接安装
+    2、Script badboy脚本录制软件
+           点击录制红色按钮，在下面框中输入URL 回车开始录制，软件会自动打开链接。
+           脚本录制完毕，点击暂停，file点击导出jmeter脚本。
+    3、jmeter点击打开录制好的脚本，添加线程
+            Transactions Per Second（每秒事务数） 说明：每秒事务数，即TPS，是性能测试中很重要的一个指标，它是用来衡量系统处理能力的一个重要指标 
+    4、生成报告
+            jmeter -n -t D:\jpywork\jmeter\jmx\Script.jmx（jmeter绝对地址） -l D:\jpywork\jmeter\jtl\jmeter.jtl（结果文件位置）  -e -o  D:\jpywork\jmeter\report（报告要生成的位置）
+       也可以写个bat文件自动运行 指定我文件中的jmx并生成报告
+
+            del /s /q D:\jpywork\jmeter\jtl\jmeter.jtl   #删除上一次生成过的jtl结果文件
+            rd /s /q D:\jpywork\jmeter\report           #删除上一次生成的报告文件夹
+            jmeter -n -t D:\jpywork\jmeter\jmx\jmeter.jmx -l D:\jpywork\jmeter\jtl\jmeter.jtl  -e -o  D:\jpywork\jmeter\report  #生成报告语句
+            pause       #固有语句 意思：去掉提示“请按任意键继续...”
+      服务器监测改端口命令 java -jar ./CMDRunner.jar --tool PerfMonAgent --udp-port 7777 --tcp-port 7777                  
+     
+jmeter性能指标
+    jp@gc - Hits per Second：每秒点击量，点击量在性能测试-常见的性能指标（一）的博文中已经详细介绍，指的是每秒web服务器接收到的请求数
+    jp@gc - PerfMon Metrics Collector：服务器性能监测控件，包括CPU，Memory，Network，Ｉ/Ｏ等等（此功能用到在需监听的服务器上启动startAgent）
+    jp@gc - Reponse Latencies Over Time：记录客户端发送请求完成后，服务器端返回请求之前这段时间
+    jp@gc - Respose Times Over Time： 响应时间超时，显示每个采样以毫秒为单位的平均响应时间
+    jp@gc - Ultimate Thread Group： 梯度线程增加设置
+    jp@gc - Transactions per Second： 服务器每秒处理的事务数，即tps
+    jp@gc - Bytes Throughput Over Time:不同时间吞吐量展示
+    聚合报告里，Throughput是按请求个数来展示的，比如说1.9/sec，就是每s发送1.9个请求；而这里的展示是按字节Bytes来展示的图表
+    
+    jp@gc - Reponse Times Distribution： 显示测试的响应时间分布，X轴显示由时间间隔分组的响应时间，Y轴包含每个区间的样本数
+    jp@gc - PerfMon Metrics Collector：服务器性能监测控件，包括CPU，Memory，Network，I/O等等
+    jp@gc - Hits per Second：每秒点击量
+    jp@gc - Composite Graph： 混合图表 
+    在它的Graphs里面可以设置多少个图表一起展示，它可以同时展示多个图表
+    性能指标推算web资源公式
+
+          假设目前需求确定系统的平均日PV（多天pv总和/天数） 通过日PV可以推算：
+
+             网络带宽=平均日pv/24*60*60*页面的平均大小*（峰值和平均流量倍数 一般是5）
+                假设平均日pv 100w   100w/（24-8）*60*60 【一天的总描述 除掉睡觉8个小时】 等于1s的pv =18
+            峰值流程可能是平均流程 5倍   秒pv（rps/qps/tps）=18 *5 =90  最后乘 平均每个页面大小 假设是 50KB
+            最终带宽 =90*50KB=5M带宽
+
+             并发数= PV / 统计时间 * 页面衍生连接次数 * http响应时间 * 因数 / web服务器数量；  
+               假设平均日pv 100w  100w、的秒pv(rps/qps/tps)  100w/（24-8）*60*60*峰值倍数5 =18 *5 =90
+            qps*平均响应时间 假设2s =90*2=180  假设一个访问派生的js /css /图片是 10个 就是 180*10=1800并发数
+
+             机器数=并发数/每 台机器能处理并发数
+               假设上面算出了日pv 100w需要1800并发数   单机能处理1000个并发 需要 1800/1000=2台机器
+
+             QPS=( 总PV数 ) / ( 每天秒数 【除掉8个小时睡觉时间】 ) = 每秒请求数(QPS)
+             峰值QPS=( 总PV数 * 80% ) / ( 每天秒数 * 20% ) = 峰值时间每秒请求数(QPS)
+                 原理：每天80%的访问集中在20%的时间里，这20%时间叫做峰值时间
+            100w 总pv  峰值qps= (100w*0.8)/(24*60*60*0.2)=80w/17,280=47qps
+            使用qps计算机器：峰值时间每秒QPS / 单台机器的QPS   = 需要的机器
+
+Jenkins +maven+jmeter+git集成
+    jdk
+    安装tomat
+        TOMCAT_HOME :  D:\tomat；  PATH :  %TOMCAT_HOME%\bin
+    安装Git 
+        下载地址   https://git-scm.com/downloads
+    安装maven
+        下载地址  https://maven.apache.org/download.cgi
+        环境变量MAVEN_HOME，赋值D:\Program Files\Apache\maven   Path，追加%MAVEN_HOME%\bin;
+        mvn -v 查看版本
+    安装Jenkins
+        https://jenkins.io/download/ 
+jmeter集群压测
+    测试策略分成了以下几步
+        第一步，基本测试。也就是说，针对某一个用户进行性能测试，压测5分钟，单线程去访问系统，而这时候对于系统的压力是非常小的。这一步目的是为了获得系统在没有压力的情况下的一个基准，基础的响应时间，这就可以为下一步性能拐点做一个对比。
+        第二步，负载测试。对单个交易，多个用户进行并发测试。目的就在于验证这个系统，在这种并发请求的情况下是否会出现并发错误或者数据库锁。
+        第三步，容量测试。按一定的比例去配比，一定的梯度去施压，直到系统出现拐点，系统处理不过来请求，响应时间变长，资源占用达到很高。
+        第四步，稳定性测试。采用一定的压力，长时间去运行。目的是为了验证系统长时间运行的的能力，是否会存在内存泄露；大量数据的请求状态下，是否会出现数据库的查询会变慢。
+
+jmeter集群结果树空白
+	第一步：打开主控机的jmeter–bin目录下的jmeter.properties文件
+	第二步：查找到mode=Standard 项
+	第三步：将其前边的注释去掉，然后保存重启jmeter，再次运行远程机器，就可以看到数据了performamce metrics
+
+
+Apache Bench命令   请求数  并发数
+    ab.exe -n 1000 -c 5000 http://dev.53.h5.zhibuji.com/api/Index/Message/Push
+    
+    
+    

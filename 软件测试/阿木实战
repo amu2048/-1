@@ -1,0 +1,537 @@
+阿木工作实战技法
+ app压力测试：
+	adbmonkey:
+		1、手机连接电脑usb
+		2、adb devices命令查看已连接设备
+		3、根据设备名称连接真机，adb connet  xxx(设备名称)
+		4、设置adb命令，我是写好bat脚本维护。adb shell monkey -p xxx（包名）  --ignore-crashes --ignore-timeouts --ignore-security-exceptions --ignore-native-crashes --monitor-native-crashes -v -v -v -s 0602 10000 1>F:\worklog\monkeylog\53applog.txt 2>&1
+         monkey使用教程：
+              命令公式 ：monkey -p 包名 执行事件 --throttle 间隔时间ms -v（日志等级） -s(随机时序)1  执行次数   1>f:\log1.txt 2>&1（保存日志包含err日志保存到1的路径中）
+              获取APP包名： adb shell am monitor   打开app 就会显示包名 
+              
+                事件排序： --pct-touch 70 触摸事件百分比70       --pct-motion 5 手势事件百分比70        --pct-trackball 5 轨迹球事件百分比10
+                          --pct-pinchzoom 2 缩放事件百分比2       --pct-rotation 0 屏幕旋转事件百分比0      --pct-nav 0 基本导航事件百分比0
+                          --pct-majornav 5 主要导航事件百分比5       --pct-syskeys 5 系统事件百分比 5
+                          --pct-appswitch 2 Activity启动事件百分比2       --pct-flip  2 键盘翻转事件百分比     --pct-anyevent 2 其他事件百分比            
+                忽略事件：--ignore-crashes 忽略crash       --ignore-timeouts 忽略timeouts        --ignore-security-exceptions 忽略权限错误     --ignore-native-crashes 忽略本地应用程序发生崩溃         -monitor-native-crashes  Android系统原生代码中的监视和报告崩溃
+                日志输出： > f:222.log 2>&1 标准错误和标准输出都输出到222.log日志中
+                输出日志：1 标准输出  2 标准错误输出  & 后台运行 > 导出的日志会覆盖原来日志  > > 追加到源文件末尾
+                日志分析：a、找到monkey里哪个地方出错 查看Monkey执行的是哪一个Activity，在switch后面找，两个swtich之间如果出现了崩溃或其他异常，可以在该Activity中查找问题的所在。
+                          b、查看Monkey里面出错前的一些事件动作，手动执行该动作.Sleeping for XX milliseconds这是执行Monkey测试时，throttle设定的间隔时间，每出现一次，就代表一个事件, Sending XX 就是代表一个操作，如下图的两个操作 应该就是一个点击事件。
+                           c、若以上步骤还不能找出，则可以使用之前一样的seek再执行monkey命令一遍，便于复现.   
+                测试结果分析：Switch--查看log中的Switch，主要是查看Monkey执行的是那一个Activity，两个swtich之间如果出现了崩溃或其他异常，可以在该Activity中查找问题的所在。
+                       a、程序无响应，ANR问题：在日志中搜索“ANR”
+                       b、崩溃问题：在日志中搜索“CRASH”
+                       c、其他问题:在日志中搜索”Exception”         
+                        算术异常类：ArithmeticExecption
+                        空指针异常类：NullPointerException
+                        类型强制转换异常：ClassCastException
+                        数组负下标异常：NegativeArrayException
+                        数组下标越界异常：ArrayIndexOutOfBoundsException
+                        违背安全原则异常：SecturityException
+                        文件已结束异常：EOFException
+                        文件未找到异常：FileNotFoundException
+                        字符串转换为数字异常：NumberFormatException
+                        操作数据库异常：SQLException
+                        输入输出异常：IOException
+                        违法访问错误：IllegalAccessError
+                        内存不足错误：OutOfMemoryError
+                        堆栈溢出错误：StackOverflowError 
+ app性能测试
+   1.perfdog工具  下载地址：https://perfdog.qq.com/login
+    
+        1、手机数据线连接电脑usb
+        2、打开perfdog软件选择要连接的手机
+		3、如果要用WiFi连接，当usb连接好手机后选择WiFi连接就可以
+        4、选择被测应用
+        5、右侧的加号勾选且点选上 需要监测的性能指标。（勾选代表记录该指标的数据，点选中代表显示可视化）
+        6、点击 开始按钮  操作APP就会监测数据
+        7、测试完 勾选Upload 会传到云端生成漂亮的报告。
+        8、点击右上角的云朵按钮，会打开云端WEB界面。可以查看对比数据等操作。
+   2. app性能测试adb命令方式
+     获取当前打开的应用的包名 adb shell dumpsys window | findstr mCurrentFocus
+     基本步骤：
+        adb命令实现性能测试
+        连接手机 adb connect 127.0.0.1:62001 （夜神模拟器，其他模拟器问度娘）  
+        
+     1.冷启动测试   
+        打开待测程序  命令获取Activity ： adb shell dumpsys window windows | findstr “Current”或“adb shell dumpsys window w | findstr \/ | findstr name= “
+        冷启动  adb shell am start -W com.tencent.mobileqq/.activity.SplashActivity
+           绝对路径，首个 Activity  
+           @测试标准：冷启动时间不超过 1.5s，热启动不超过 1s。
+           @ am 是 shell 中集成的一个命令，ActivityManager 的简写。  
+           @ -W 是指启动完成之后，返回启动耗时。
+           @可能存在 app 缓存（提示 Warning: Activity not started, intent has been delivered to currently running top-most instance），
+             建议重新打开模拟器后， 直接运行命令
+            Status: ok
+            Activity: com.tencent.mobileqq/.activity.SplashActivity
+            ThisTime: 839       该 Activity 的启动耗时，单位 ms；
+            TotalTime: 839      应用自身启动耗时, ThisTime+应用application等资源启动时间；
+            WaitTime: 916       系统启动应用耗时, TotalTime+系统资源启动时间。
+            热启动 返回app到桌面不是杀死应用， 再执行命令就是热启动时间的性能数据
+           
+     2.内存占用测试       
+        主要测试点
+         空闲状态：切换至后台或者启动后不做任何操作，消耗内存最少。
+         中强度状态：时间偏长的操作应用。
+         高强度状态：高强度使用应用，可以跑 monkey 来测试（通常用来测试内存泄漏）
+
+        测试方法     
+         adb shell dumpsys meminfo  + 包名   
+         adb shell dumpsys meminfo com.tencent.mobileqq
+           ** MEMINFO in pid 2832 [com.tencent.mobileqq] **
+                            Pss   Private  Private  Swapped    Heap     Heap     Heap
+                          Total    Dirty    Clean    Dirty     Size    Alloc     Free
+                       （实际占用）（可回收）
+                          ------   ------   ------   ------   ------   ------   ------
+            Native Heap        0        0        0        0    57344    47144    10199           （本机堆栈）
+            Dalvik Heap    50938    50756        0        0    56774    44670    12104            （虚拟机堆栈）
+           指标一：Native heap alloc、Dalvik heap alloc。若这两个值一直增长，说明可能出现内存泄漏
+           指标二：PSS TOTAL App实际占用的内存大小。
+               退出某个页面后，内存是否有回落
+                如果没有及时回落，且程序自动 GC（Garbage Collection，垃圾回收）或 者手动 GC，那便可确认有问题。
+               进行某个操作后，内存是否增长过快。
+                如果增长过快，也有可能存在风险，需重复操作确认。
+           
+     3.CPU 繁忙测试  
+        主要测试点 
+           在空闲时间(切换至后台)的消耗，基本没大应用使用 CPU
+           在运行一些应用的情况下，CPU 已占 50%的情况下，观察应用程序占用 CPU 的情 况
+           在高负荷的情况下看 CPU 的表现（CPU 占用应是在 80%以上）
+        
+        具体场景  
+            应用空闲状态运行监测 CPU 占用率
+             应用按 Home 键退到后台，不再占用系统的状态（通常是灭屏半分钟后）
+             CPU 占用率=0%
+            应用中等规格运行监测 CPU 占用率
+             模拟用户最常见的使用场景
+             CPU 占用率≤30%
+            应用满规格长时间正常运行监测 CPU 占用率
+             应用正常运行，打开应用进行基本操作
+             CPU 占用率≤50%
+        
+        测试方法   
+         adb shell top -m -s | findstr +包名
+           显示列的名字依次为：PID  USER PR  NI VIRT RES SHR S[%CPU] %MEM  TIME+  ARGS
+         或者adb shell dumpsys cpuinfo命令找到被测应用的PID  再用命令adb shell dumpsys cpuinfo |findstr PID号  查看菜谱占用信息 
+           
+     4.FPS流畅度测试
+        测试方法一
+         1.手机设置 关于手机--版本号点7次进入开发者模式--进入开发者选项--监控栏中的 GPU呈现模式分析（小米是HWUI）--In adb shell dumpsys gfxinfo
+         2.打开要测试的app
+         3.cmd中输入adb命令(安卓6以上) ：   adb shell dumpsys gfxinfo 包名  >fps.txt（在连接手机后，输入命令：adb shell am monitor，然后打开应用，即可看到当前打开应用的包名）
+         4.Graphics info for pid 1331 [com.tencent.mm]：表明当前 dump 的为 com.tencent.mm 的帧信息，pid 为 1331。    
+           Total frames rendered: 2218：本次 dump 搜集了 2218 帧的信息。
+           Janky frames: 26 (1.17%)：帧中有 26 帧的耗时超过了 16ms，卡顿概率为 1.17%。 
+           Number Missed Vsync: 3：垂直同步失败的帧
+           Number High input latency:2213：处理 input 时间超时的帧
+           Number Slow UI thread: 1：因为 ui 线程导致 slow 的帧
+           Number Slow bitmap uploads: 0：因为 bitmap 加载 slow 的帧
+           Number Slow issue draw commands: 3：因为绘制导致 slow 的帧
+         5.抓取的数据处理（住区的数据只是当前打开app的界面帧率）
+           Draw: 表示在 Java 中创建显示列表部分中的 OnDraw()方法占用的时间。
+           Prepare：表示渲染引擎准备时间，不关注此项。
+           Process：表示渲染引擎执行显示列表所花的时间，view 越多，时间就越长。
+           Execute：表示把一帧数据发送到屏幕上排版显示实际花费的时间。
+           Draw + Process + Execute = 完整显示一帧 ，这个时间要小于 16ms 才能保存每秒 60 帧。
+           数据处理;导出或者复制数据到excel中，cmd复制的可以先复制到记事本把空格替换成TEB空，然后在粘贴到excel中就是按列显示了。
+           在excl表格中新增一列FPSS（fps时间）计算Draw + Process + Execute三列的和。在添加一行参考线列16S.然后插入折线图，只要超过16s的都是低于60帧率每秒的，都需要优化。
+        测试方法二
+         1.手机设置 关于手机--版本号点7次进入开发者模式--进入开发者选项--监控栏中的 GPU呈现模式分析（小米是HWUI）--在屏幕显示条形图    
+         2. 开启此功能后，随着屏幕刷新，界面上会滚动显示垂直的柱状图来表示每帧画面所 需要渲染的时间，柱状图越高表示花费的渲染时间越长。
+           每个直方条代表一帧，每个直方条的高度表示该帧渲染所用的时间（以毫秒为 单位）
+           界面中间一根绿色水平线代表 16ms，每一帧的柱状线都在这条绿线以下，才能避免出现由丢帧引起的卡顿。
+           颜色含义（Android 6.0 及更高版本中的竖条区段）百度搜索。
+        优化方案通过以下几种方式可以有效提升应用FPS：
+            1、尽量不要在刷新时做耗时操作，例如准备数据，创建图片，图片变换等，数据和图片都应该在之前就加载到内存中，图片变换用canvas的变换来实现。
+            2、同一个界面中多个动画重叠出现时，尽量将动画的刷新过程统一刷新，避免频繁的invalidate，尤其是多个动画有时序上的关系时更应该统一。
+            3、尽量使用带有参数的invalidate来刷新，这样可以减少很多运算量。
+     5.GPU 过度渲染测试
+        测试步骤
+          1.开启 GPU 过度渲染
+           设置--开发者选项--单击调试GPU过度绘制--选择 显示过度绘制区域
+          2.打开被测软件
+        参数说明
+          GPU 过渡渲染不同的颜色代表不同的绘制程度
+           原色：无过渡绘制
+           蓝色：绘制一次 （理想状态）
+           绿色：绘制二次2x
+           浅红：绘制三次3x （可以优化）
+           深红：绘制四次4x （必须优化）
+        测试指标  
+           控制过渡绘制为 2x
+           不允许存在 4x 过渡绘制
+           不允许存在面积超过屏幕 1/4 的 3x 过渡绘制
+     6.耗电量测试
+        确保手机跟电脑都处于同一个网络
+        手机插线连着电脑，确保已连接上，使用【adb devices】命令check，是否连接
+        输入【adb tcpip 5555】，使用tcpip协议连接手机
+        无线连接手机     adb connect 192.168.1.8（你自己手机的ip）
+        清除已有的耗电量数据   adb shell dumpsys batterystats --enable full-wake-history
+        设备耗电量数据重置    adb shell dumpsys batterystats --reset
+        查包名 打开被应用   adb shell dumpsys window | findstr mCurrentFocus
+        寻找包名的uid    adb shell ps |find "package"
+            下是dos下出来的信息，u0_a445就是uid，需要去除下划线_，  即u0a445
+                u0_a445   7068  772   1646920 85320 SyS_epoll_ 0000000000 S com.nuomi:installdex
+                u0_a445   7158  772   1854944 226048 SyS_epoll_ 0000000000 S com.nuomi
+        确定测试包的名字和uid    adb shell dumpsys batterystats "com.nuomi" |find "u0a445"
+        然后执行业务测试场景
+        再次查看耗电量  adb shell dumpsys batterystats "com.nuomi" |find "u0a445"
+         Uid u0a318: 0.944 ( cpu=0.943 wifi=0.000490 sensor=0.000752 ) Including smearing: 1.22 ( proportional=0.276 )
+         其中的 0.994就是耗电量
+
+        杀死应用进程 得到数据为毫安mAh
+        
+     7.流量测试
+        获取当前打开的应用的包名     adb shell dumpsys window | findstr mCurrentFocus
+        通过包名查应用的pid   adb shell ps -e |find "package name"   27541即为pid
+            查出数据 u0_a318  27541  701 2551180 291984 0 0 S com.ss.android.ugc.aweme.lite
+        cat /proc/"+Pid+"/net/dev"获取网速，找到wian0行，第一列为下载流量字节  第九列为上传流量字节  单位bates   
+        
+    8.GT性能工具的使用
+        1.安装腾讯的GTapp
+        2.打开GT 选择待测 App、选择测试指标
+            AUT：设置被测应用信息
+            pss：实际使用的物理内存
+            private dirty：私有内存
+            jiffies：CPU 时间片，反映进程的 CPU 消耗
+            net：整个手机产生的流量
+        3.选择监控参数 
+            点参数→编辑→拖动需要监控的参数到“已关注的参数”→不点完成
+        4.点击插件 添加监控耗电量、流量和流畅度的参数
+          点击耗电数据采集 -- 勾选电流，电压，电量，温度。点击开始。
+          点击抓包 -- 点击开始（需要root才可以）--点击开始
+          点击流畅度调试 -- 点“检测”必须出现 ok，否则点“更改”→检测，提示“select a app first”忽略
+        5.返回参数栏选择显示哪些指标，勾选上
+        6.AUT界面，点击启动按钮
+        7.操作app 
+        8.返回参数界面，点击保存。也可点击相应指标查看折线图
+        9.导出结果分析 adb -s (-s指定设备执行命令)  设备中文件地址   f:\gt（复制到电脑的哪个位置）
+              adb -s 127.0.0.1:62025  pull /storage/emulated/0/GT/GW/com.tencent.mobileqq/8.3.6/0601/gtdesc.csv f:\gt
+          在 Excel 中插入散点图（带平滑线）   
+              
+ python自动化测试
+    1.appium自动化
+        1、部署SDK
+           下载sdk并安装
+           设置sdk环境变量  
+            adb kill-server //结束adb服务
+            adb start-server //启动adb服务
+            adb devices //获取adb设备列表
+        2、设置appium
+            下载appium
+            启动appium
+            启动appium的检查会话框
+            设置参数   {
+                        "platformName": "Android",      #设备系统  Android&iOS
+                         "platformVersion": "10",       #安卓版本如5.1.1 。命令：adb shell getprop ro.build.version.release
+                         "deviceName": "eed4ba88",      #设备连接名字。 命令：adb devices   获得的那一串数字就是
+                         "appPackage": "com.tencent.mobileqq",    #要抓的app包名，
+                          #在设备启动app，
+                          #然后在CMD命令框：adb shell dumpsys window windows | findstr “Current” 或”adb shell dumpsys window w | findstr \/ | findstr name= “
+                          # 显示的如：mCurrentFocus=Window{3ad1f9e4 u0 com.tencent.mobileqq/com.tencent.mobileqq.activity.LoginActivity}
+                          #【com.tencent.mobileqq】 就是包名，【 .activity.LoginActivity】  就是启动视图入口 。  
+                         "appActivity": ".activity.LoginActivity",     #启动视图入口
+                         "noReset": "true"          #为true时不更改原机数据，否则面临改写数据
+                        }
+            启动会话
+            点击小眼睛按钮开始录制（以手机QQ为例）
+                在【左侧视图】中点击【登入】按钮
+                在【选定元素视图】中选择【点击】按钮，意思给这个元素设置点击动作。
+                选中账号栏 选择清空动作：因为QQ具有自动记录账号的功能 我们输入帐号前先清空原有数据
+                点击发送密钥：就是输入动作，写入账号
+                继续给密码框点击动作
+                给密码框发送密钥动作
+                选中登入按钮，给予点击动作
+                点击账号设置图标，左上角的，但是选不到元素，你要选择最近元素，然后在AppSource视图中挨个寻找，当即点击是界面会有对应的地方，
+                我找到的是   android.widget.RelativeLayout resource-id="com.tencent.mobileqq:id/e3u">
+                                <android.widget.Button content-desc="帐户及设置" resource-id="com.tencent.mobileqq:id/ba1">
+                    选择这个账户及设置的栏  可以看到 图标变色，给他个点击动作即可。
+                在我的账户设置界面，选在 设置 按钮 给他点击动作。
+                选中账号设置，点击动作
+                选择退出当前帐号，点击动作
+                在弹出确认退出弹框选中 确认退出按钮 给他点击动作
+            脚本录制完毕。
+            在右上方选择脚本录制的语言，我用python 然后记得在点击【显示隐藏样板代码】按钮，在选择语言右侧。
+            复制脚本到pycharm，你可根据自己代码语言的编译器中，优化。
+
+        3、pycharm设置
+            安装appium依赖包 'Appium-Python-Client'
+              依次点击File->Settings->Project->Project interpreter   点击+号，搜索Appium-Python-Client选中点击下方的 Install Package按钮等待安装完成即可。
+
+            把appium里的代码拷贝过来。
+            导入import time（用来延时执行）   import unittest  （单元测试框架）
+            新建类继承unittest.TestCase类class
+                class Appiumfile(unittest.TestCase):
+
+                    '''初始化函数'''
+                    @classmethod   #装饰器 使初始化函数只执行一次
+                    def setUp(self):
+                        caps = {}
+                        caps["platformName"] = "Android"
+                        caps["platformVersion"] = "5.1.1"
+                        caps["deviceName"] = "eed4ba88"
+                        caps["appPackage"] = "com.tencent.mobileqq"
+                        caps["appActivity"] = ".activity.LoginActivity"
+                        caps["noReset"] = "true"
+                        self.driver = webdriver.Remote("http://localhost:4723/wd/hub", caps)
+                        print('打开指定app',caps["appPackage"])
+
+                    '''登入用例 根据用例名顺序执行'''
+                    def test_longin_01(self):
+                        self.driver.implicitly_wait(10)  # 隐士等待
+                        el2 = self.driver.find_element_by_accessibility_id("请输入QQ号码或手机或邮箱")
+                        print('定位账号输入框')
+                        el2.clear()
+                        print('清除账号输入框')
+                        el2.send_keys("1248570630")
+                        print('写入登入账号')
+                        self.driver.implicitly_wait(3)
+                        el3 = self.driver.find_element_by_accessibility_id("密码 安全")
+                        print('定位密码输入框')
+                        el3.click()
+                        print('清除密码输入框')
+                        el3.clear()
+                        print('写入密码')
+                        el3.send_keys("lcs19930317")
+                        time.sleep(0.5)
+                        el4 = self.driver.find_element_by_accessibility_id("登 录")
+                        print('定位登入按钮')
+                        el4.click()
+                        print('点击登入按钮开始登入')
+
+                    '''退出登入用例'''
+                    def test_longout_02(self):
+                        print('开始test_longout_02用例')
+                        self.driver.implicitly_wait(5)
+                        el6 = self.driver.find_element_by_accessibility_id("帐户及设置")
+                        print('定位帐户及设置')
+                        el6.click()
+                        print('点击帐户及设置')
+                        time.sleep(0.5)
+                        el7 = self.driver.find_element_by_accessibility_id("设置")
+                        print('定位设置按钮')
+                        el7.click()
+                        print('点击设置按钮')
+                        time.sleep(0.5)
+                        el8 = self.driver.find_element_by_id("com.tencent.mobileqq:id/account_switch")
+                        print('定位账户管理')
+                        el8.click()
+                        print('点击账户管理')
+                        time.sleep(0.5)
+                        el9 = self.driver.find_element_by_accessibility_id("退出当前帐号")
+                        print('定位退出账号')
+                        el9.click()
+                        print('点击退出账号')
+                        time.sleep(0.5)
+                        el10 = self.driver.find_element_by_id("com.tencent.mobileqq:id/dialogRightBtn")
+                        print('定位确认退出账号按钮')
+                        el10.click()
+                        print('点击确认退出账号按钮')
+
+                    '''结束函数'''
+                    @classmethod            #装饰器 使结束函数只执行一次
+                    def tearDown(self):           
+                        print('准备退出app')
+                        self.driver.quit()
+                        print('退出完成')
+
+            还可以使用 def setUp(self)和def tearDown(self)函数类 但是每执行一次用例就会执行一次初始化函数和结束函数
+            如果用户名和密码参数化多个，使用ddt模块使用方法
+                导入 ddt
+                测试数据为存放多个字典的列表。
+                测试类的前面需要加上修饰器：@ddt.ddt
+                对应测试用例之前加上修饰器：@ddt.data()
+                    #   测试数据：每一条数据都是一个字典；全部数据存放在一个列表中。
+                    testDate = [{'username': 'AAA', 'password': '11111'},
+                                {'username': 'BBB', 'password': '22222'},
+                                {'username': 'CCC', 'password': '33333'}]
+
+                    #测试类之前需要加上装饰器：@ddt.ddt
+                    @ddt.ddt
+                    class Test(unittest.TestCase):
+
+                        def setUp(self):
+                            print('start')
+
+                        #测试用例前面需要加上装饰器：@ddt.data()
+                        #装饰器的参数就是测试数据：@ddt.data(*testDate)
+                        @ddt.data(*testDate)
+                        def test_ddt(self, data):
+                            print(data)
+
+                        def tearDown(self):
+                            print('end')
+            建个run.py脚本来运行测试用例
+            import unittest
+            import time
+            from BeautifulReport import BeautifulReport  #测试报告框架
+
+            if __name__ == '__main__':
+                # unittest.main()
+                   # test_suite = unittest.defaultTestLoader.discover('./TestCase', pattern='*.py')  #以unittest运行哪个文件夹  下的文件  test*代表所有test文件开头的文件
+                    test_suite = unittest.defaultTestLoader.discover('./TestCase', pattern='TestLongin02.py')
+                    now = time.strftime("%Y-%m-%d %H%M%S")   #获取当前时间
+                    filename = now + 'report.html'        #以时间命名
+                    result = BeautifulReport(test_suite)   #框架调取测试文件
+                    result.report(filename=filename, description='自动化测试报告', report_dir='./Testreport', theme='theme_memories')
+    2.接口自动化
+     1、接口自动化使用request框架
+        import requests
+        import json
+        class RunMethod:
+            #post请求模式模型
+            def post_main(self,url,data,header=None):
+                res = None
+                #如果头部消息不为空进入
+                if header !=None:
+                    #request框架，传入url,参数，头，并转将返回结果转换成json格式
+                    #print("发送post请求",url,type(url),data,type(data),header,type(header))
+                    res =requests.post(url=url,data=data,headers=header)
+                else:
+                    res=requests.post(url=url,data=data).json()
+                #print("res类型l",type(res),res,res.text)
+                res = res
+                print("响应：",res)
+                return json.dumps(res)   #字典转json
+            #get请求模式模型
+            def get_main(self,url,data,header=None):
+                res = None
+                #如果头部消息不为空进入
+                if header !=None:
+                    #request框架，传入url,参数，头，并转将返回结果转换成json格式
+                    res =requests.get(url=url,data=data,headers=header)
+                else:
+                    res=requests.get(url=url,data=data).json()
+                return res.json()
+            #接口请求运行模型
+            def run_main(self,method,url,data=None,header=None):
+                if method =="post":
+                    res = self.post_main(url,data,header)
+                else:
+                    res = self.get_main(url, data, header)
+                #print("res:",res)
+                return json.dumps(res,ensure_ascii=False,sort_keys=True,indent=2)
+              
+    
+ jmeter性能测试
+    1.jmeter基本安装操作
+        1、jmeter安装，直接安装
+        2、Script badboy脚本录制软件
+               点击录制红色按钮，在下面框中输入URL 回车开始录制，软件会自动打开链接。
+               脚本录制完毕，点击暂停，file点击导出jmeter脚本。
+        3、jmeter点击打开录制好的脚本，添加线程
+                Transactions Per Second（每秒事务数） 说明：每秒事务数，即TPS，是性能测试中很重要的一个指标，它是用来衡量系统处理能力的一个重要指标 
+        4、生成报告
+                jmeter -n -t D:\jpywork\jmeter\jmx\Script.jmx（jmeter脚本的绝对地址） -l D:\jpywork\jmeter\jtl\jmeter.jtl（结果文件位置）  -e -o  D:\jpywork\jmeter\report（生成的报告保存位置）
+           也可以写个bat文件自动运行 指定我文件中的jmx并生成报告
+
+                del /s /q D:\jpywork\jmeter\jtl\jmeter.jtl   #删除上一次生成过的jtl结果文件
+                rd /s /q D:\jpywork\jmeter\report           #删除上一次生成的报告文件夹
+                jmeter -n -t D:\jpywork\jmeter\jmx\jmeter.jmx -l D:\jpywork\jmeter\jtl\jmeter.jtl  -e -o  D:\jpywork\jmeter\report  #生成报告语句
+                pause       #固有语句 意思：去掉提示“请按任意键继续...”
+    2.性能插件：
+        一些性能指标依赖插件的，安装插件需要一个插件管理工具，
+            1、下载地址： https://jmeter-plugins.org/install/Install
+            2、安装：下载后文件为plugins-manager.jar格式，将其放入jmeter安装目录下的lib/ext目录，然后重启jmeter，即可。 
+            3、启动jemter，点击选项，最下面的一栏，如下图所示：
+        这个工具安装插件方法：在jemter菜单栏点击 选项 进入选择PluginManager，进入之后在可下载选项卡搜索插件。
+            1、搜索Standard，结果列勾选【jpgc-Standard Set】安装即可。
+            2、搜索【Metrics 】结果列勾选【PerMon（Servers Performance Monitoring）】安装即可。
+            3、如果需要tps那还要搜索【Transactions 】之后勾选搜索结果【3 Basic Graphs】点击右下方安装插件。
+    3.jmeter性能指标
+        jp@gc - Hits per Second：每秒点击量，点击量在性能测试-常见的性能指标（一）的博文中已经详细介绍，指的是每秒web服务器接收到的请求数
+        jp@gc - PerfMon Metrics Collector：服务器性能监测控件，包括CPU，Memory，Network，Ｉ/Ｏ等等（此功能用到在需监听的服务器上启动startAgent）
+        jp@gc - Reponse Latencies Over Time：记录客户端发送请求完成后，服务器端返回请求之前这段时间
+        jp@gc - Respose Times Over Time： 响应时间超时，显示每个采样以毫秒为单位的平均响应时间
+        jp@gc - Ultimate Thread Group： 梯度线程增加设置
+        jp@gc - Transactions per Second： 服务器每秒处理的事务数，即tps
+        jp@gc - Bytes Throughput Over Time:不同时间吞吐量展示
+        聚合报告里，Throughput是按请求个数来展示的，比如说1.9/sec，就是每s发送1.9个请求；而这里的展示是按字节Bytes来展示的图表
+        jp@gc - Reponse Times Distribution： 显示测试的响应时间分布，X轴显示由时间间隔分组的响应时间，Y轴包含每个区间的样本数
+        jp@gc - PerfMon Metrics Collector：服务器性能监测控件，包括CPU，Memory，Network，I/O等等，
+            1、使用此此项需要打通服务器端口（服务器监测改端口命令 java -jar ./CMDRunner.jar --tool PerfMonAgent --udp-port 7777 --tcp-port 7777）
+            2、需要再服务器运行ServerAgent，、将ServerAgent-2.2.1.jar上传到被测服务器，解压，进入目录，Windows环境，双击ServerAgent.bat启动；linux环境执ServerAgent.sh启动，默认使用4444端口。
+        jp@gc - Hits per Second：每秒点击量
+        jp@gc - Composite Graph： 混合图表 
+        在它的Graphs里面可以设置多少个图表一起展示，它可以同时展示多个图表
+    4.性能指标推算web资源公式
+        假设目前需求确定系统的平均日PV（多天pv总和/天数） 通过日PV可以推算：
+            网络带宽=平均日pv/24*60*60*页面的平均大小*（峰值和平均流量倍数 一般是5）
+                假设平均日pv 100w   100w/（24-8）*60*60 【一天的总描述 除掉睡觉8个小时】 等于1s的pv =18
+            峰值流程可能是平均流程 5倍   秒pv（rps/qps/tps）=18 *5 =90  最后乘 平均每个页面大小 假设是 50KB
+            最终带宽 =90*50KB=5M带宽
+
+             并发数= PV / 统计时间 * 页面衍生连接次数 * http响应时间 * 因数 / web服务器数量；  
+               假设平均日pv 100w  100w、的秒pv(rps/qps/tps)  100w/（24-8）*60*60*峰值倍数5 =18 *5 =90
+            qps*平均响应时间 假设2s =90*2=180  假设一个访问派生的js /css /图片是 10个 就是 180*10=1800并发数
+
+             机器数=并发数/每 台机器能处理并发数
+               假设上面算出了日pv 100w需要1800并发数   单机能处理1000个并发 需要 1800/1000=2台机器
+
+             QPS=( 总PV数 ) / ( 每天秒数 【除掉8个小时睡觉时间】 ) = 每秒请求数(QPS)
+             峰值QPS=( 总PV数 * 80% ) / ( 每天秒数 * 20% ) = 峰值时间每秒请求数(QPS)
+                 原理：每天80%的访问集中在20%的时间里，这20%时间叫做峰值时间
+            100w 总pv  峰值qps= (100w*0.8)/(24*60*60*0.2)=80w/17,280=47qps
+            使用qps计算机器：峰值时间每秒QPS / 单台机器的QPS   = 需要的机器
+
+ jmeter集群压测
+    测试策略分成了以下几步
+        第一步，基本测试。也就是说，针对某一个用户进行性能测试，压测5分钟，单线程去访问系统，而这时候对于系统的压力是非常小的。这一步目的是为了获得系统在没有压力的情况下的一个基准，基础的响应时间，这就可以为下一步性能拐点做一个对比。
+        第二步，负载测试。对单个交易，多个用户进行并发测试。目的就在于验证这个系统，在这种并发请求的情况下是否会出现并发错误或者数据库锁。
+        第三步，容量测试。按一定的比例去配比，一定的梯度去施压，直到系统出现拐点，系统处理不过来请求，响应时间变长，资源占用达到很高。
+        第四步，稳定性测试。采用一定的压力，长时间去运行。目的是为了验证系统长时间运行的的能力，是否会存在内存泄露；大量数据的请求状态下，是否会出现数据库的查询会变慢。
+    jmeter集群部署
+        1、复制jmeter包放到所有执行机和压力机上，必须同样的包配置，且所有机器的jdk版本一致。
+        2、在执行机上配置jmeter的JMeter.properties文件,找到remote_host=127.0.0.1这一行，把压力机的IP添加进去多个ip英文逗号分割，默认端口1099.列：192.168.10.122:1099,192.168.10.123:1099。
+    jmeter集群查看结果树空白问题
+        第一步：打开主控机的jmeter–bin目录下的jmeter.properties文件
+        第二步：查找到mode=Standard 项
+        第三步：将其前边的注释去掉，然后保存重启jmeter，再次运行远程机器，就可以看到数据了performamce metrics
+
+
+ Apache Bench命令   请求数  并发数
+    ab.exe -n 1000 -c 5000 http://dev.53.h5.zhibuji.com/api/Index/Message/Push
+    
+ 安全审计工具
+    1.Acunetix工具：
+        简介：是一款服务版工具，需要部署服务。它会自动抓取您的网站, 并执行黑匣子和灰色框黑客技术, 发现危险的漏洞, 可能会危及您的网站和数据。
+        安装：
+            1、运行Acunetix.Web.12.0.180911134.Retail.exe程序，默认安装。   
+            2、桌面底部菜单来右键打开任务管理器，停止服务中的 acunetix. msc。
+            3、把Patch.exe软件放到安装目录下，运行应用修补程序 (以管理员身份运行)
+            4、弹出的激活程序 里面的信息随便写，然后点击 应用
+            5、以管理员身份运行 cmd 并运行cacls "C:\ProgramData\Acunetix\license." /t /p everyone:r   注意引号内的是你安装目录
+            6、然后选择 是  YES
+        扫描操作：
+            1、打开运行Acunetix程序
+            2、点击 Targets 在顶部 Add Target，添加扫描，设置要扫描的网址
+            3、点击 Scans ，选择你要扫描的项目，再顶部选择 Scans 按钮
+            4、在弹出对话框选择 扫描类型（全扫描）、选择报告（Developer开发者模式）、选择时间（瞬间第一个）
+            5、点击 Create Scan  开始扫描
+            6、点击 Reports 查看生成的监测报告，在对应项目报告后面点击Download下载想要的格式
+            
+    2.IBM Security AppScan Standard工具：
+        安装：
+            1、点击 SAPPSSV9.0.3.10EWM.exe  程序开始安装
+            2、直接安装就好，然后运行一次再关闭
+            3、把LicenseProvider.dll替换到安装目录的LicenseProvider.dll
+        基本操作：
+            web:1、菜单栏点击 扫描 按钮，下选择完全扫描，在扫描配置中配置要扫描的url并点击确定按钮开始扫描。
+                2、扫描结束后点击菜单栏的报告按钮，选择适合你想要的报告标准，然后保存报告即可。
+            app:1、点击菜单栏的 手动探索按钮，选择外部设备。
+                2、在外部流量记录器右上方点击记录代理配置：
+                    1、设置代理端口（一般默认）
+                    2、外部连接选择 接受白名单并针对其他项发出提示
+                    3、在白名单处点击加号 把你的手机IP地址添加进去
+                    4、设置完成点击确认按钮保存
+                3、查看电脑IP（cmd命令框输入ipconfig）
+                4、设置手机代理，打开WiFi所连接网络的高级设置，选择手动代理，服务器写电脑的IP，端口是2步骤的端口号，保存。
+                5、操作手机APP，同时在外部流量记录器上可以发现app请求的地址。如果想抓取app全部的扫描那就把app全部功能操作一遍。
+                6、APP功能操作完毕，点击外部流量记录器上方的停止记录按钮，在检测到的域一栏勾选你要扫描的域，然后点击下方的确定按钮，此时自动扫描分析。
+                7、扫描分析结束后点击菜单栏的报告按钮，选择报告类型然后到处报告。
+        
+        
+        
+        
+		
